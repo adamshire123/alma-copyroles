@@ -60,7 +60,7 @@ if alma_env_confirm.lower() in ["y","yes"]:
         review_roles = input("would you like to review the roles that will be copied? [y/n]")
         if review_roles.lower() in ["y", "yes"]:
             print_user_roles(source_roles)
-        do_copy = input("Copy these roles? WARNING: This cannont be undone? [copy-roles/n]")
+        do_copy = input("Copy these roles? WARNING: This operation cannont be undone. [copy-roles/n]")
         if do_copy.lower() in ['copy-roles']:
             update_roles(source_roles, dest_user)
                 
