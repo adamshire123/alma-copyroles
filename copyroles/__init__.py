@@ -1,0 +1,1 @@
+"""copyroles package"""
