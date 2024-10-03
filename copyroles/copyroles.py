@@ -12,7 +12,7 @@ users_endpoint = 'users/'
 config_endpoint = 'conf/'
 
 try:
-    apikey = os.getenv('ALMA_API_KEY')
+    apikey = os.environ('ALMA_API_KEY')
 except:
     exit('MISSING REQUIRED ENVIRONMENT VARIABLE: ALMA_API_KEY')
 headers = {
