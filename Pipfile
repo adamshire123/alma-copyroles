@@ -16,7 +16,9 @@ black = "*"
 coverage = "*"
 coveralls = "*"
 ruff = "*"
-
+mypy = "*"
+types-requests = "*"
+types-tabulate = "*"
 
 [requires]
 python_version = "3.12"
