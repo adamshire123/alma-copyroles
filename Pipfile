@@ -14,3 +14,6 @@ requests-mock = "*"
 
 [requires]
 python_version = "3.12"
+
+[scripts]
+copy_roles = "python -c \"from copyroles.cli import main; main()\""
