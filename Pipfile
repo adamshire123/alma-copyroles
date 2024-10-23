@@ -11,6 +11,12 @@ dictdiffer = "*"
 [dev-packages]
 pytest = "*"
 requests-mock = "*"
+pre-commit = "*"
+black = "*"
+coverage = "*"
+coveralls = "*"
+ruff = "*"
+
 
 [requires]
 python_version = "3.12"
