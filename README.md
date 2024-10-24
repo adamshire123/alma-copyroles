@@ -11,8 +11,8 @@ ALMA_API_KEY=# an Alma API key with `user` read/write permissions and `conf` rea
 
 - Install dependencies in a virtual environment
     
-    `pipenv install`
+    `make install`
 
 - Run the script from the virtual environment, passing in the primary ID's of the source and target users as commandline arguments
 
-    `pipenv run copy [primary_id_of_user_to_copy_from] [primary_id_of_user_to_copy_to]`
+    `pipenv run copy_roles [primary_id_of_user_to_copy_from] [primary_id_of_user_to_copy_to]`
