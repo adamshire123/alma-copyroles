@@ -9,7 +9,7 @@ ALMA_API_KEY=# an Alma API key with `user` read/write permissions and `conf` rea
 ```
 ## To run
 
-- Install dependencies in a virtual environment
+- Create a virtual environment and install dependencies
     
     `make install`
 
