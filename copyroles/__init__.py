@@ -1,1 +1,1 @@
-"""copyroles package"""
+"""copyroles package."""
