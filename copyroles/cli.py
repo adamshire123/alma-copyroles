@@ -1,26 +1,75 @@
-import argparse
 import os
-from sys import exit
 
-import requests
+import click
+from requests.exceptions import HTTPError
 from tabulate import tabulate
 
 from copyroles.alma import AlmaClient
 
-parser = argparse.ArgumentParser()
-parser.add_argument("source_user")
-parser.add_argument("dest_user")
+
+@click.command()
+@click.argument("source_username", type=str)
+@click.argument("target_username", type=str)
+@click.option(
+    "--source-env",
+    type=click.Choice(["prod", "sandbox"], case_sensitive=False),
+    required=True,
+    help="Environment of the source user (prod or sandbox).",
+)
+@click.option(
+    "--target-env",
+    type=click.Choice(["prod", "sandbox"], case_sensitive=False),
+    required=True,
+    help="Environment of the target user (prod or sandbox).",
+)
+def main(
+    source_username: str, target_username: str, source_env: str, target_env: str
+) -> None:
+    if source_env == "sandbox" and target_env == "prod":
+        message = "Cannot copy roles from sandbox to prod environment."
+        raise click.UsageError(message)
+    alma_api_keys = {}
+    alma_api_keys["prod"] = os.environ["PROD_ALMA_API_KEY"]
+    alma_api_keys["sandbox"] = os.environ["SANDBOX_ALMA_API_KEY"]
+    try:
+        source_alma_client = AlmaClient(alma_api_keys[source_env])
+        target_alma_client = AlmaClient(alma_api_keys[target_env])
+    except KeyError as e:
+        click.echo(f"Error creating alma client: {e}")
+        return
+    job_summary = (
+        f"Source: \033[1m{source_username.upper()}\033[0m - "
+        f"\033[1m{target_alma_client.alma_environment.upper()}\033[0m\n"
+        f"Target: \033[1m{target_username.upper()}\033[0m - "
+        f"\033[1m{target_alma_client.alma_environment.upper()}\033[0m\n"
+    )
+    click.echo("\n-- Copy Alma Roles --\n" + job_summary)
+
+    if click.confirm("Continue and review roles?", default=False, abort=False):
+        try:
+            source_user = source_alma_client.get_alma_user(source_username)
+            target_user = target_alma_client.get_alma_user(target_username)
+            source_roles: list = source_user["user_role"]
+        except HTTPError as e:
+            click.echo(f"Error getting users: {e}")
+            return
+        if click.confirm("review roles?"):
+            click.echo(print_user_roles(source_roles))
+        do_copy = click.prompt(
+            "\nCopy these Alma roles?\n"
+            + job_summary
+            + "\nWARNING: THIS OPERATION CANNOT BE UNDONE.\n",
+            prompt_suffix="[type 'copy-roles' to continue or anything else to abort]: ",
+            show_choices=False,
+        )
+        if do_copy == "copy-roles":
+            target_alma_client.update_alma_roles(source_roles, target_user)
+            click.echo("Roles copied.")
+        else:
+            click.echo("Copy operation cancelled.")
 
 
-try:
-    apikey = os.environ["ALMA_API_KEY"]
-except KeyError:
-    exit("MISSING REQUIRED ENVIRONMENT VARIABLE: ALMA_API_KEY")
-
-alma_client = AlmaClient(apikey)
-
-
-def print_user_roles(roles: list) -> None:
+def print_user_roles(roles: list) -> str:
     """Print a nicely formatted table of alma user roles."""
     roles_tab = [
         {
@@ -30,43 +79,4 @@ def print_user_roles(roles: list) -> None:
         }
         for role in roles
     ]
-    print(tabulate(roles_tab, headers="keys"))  # noqa: T201
-
-
-def main() -> None:
-    args = parser.parse_args()
-    try:
-        alma_environment: str = alma_client.get_alma_environment()
-    except requests.exceptions.HTTPError as e:
-        print("HTTP Error:", e)  # noqa: T201
-        exit(1)
-    confirm_environment: str = input(
-        f"You are working in the \033[1m{alma_environment.upper()}\033[0m environment. "
-        "Continue? [y/n]"
-    )
-    if confirm_environment.lower() == "y":
-        source_user: dict = alma_client.get_alma_user(args.source_user)
-        dest_user: dict = alma_client.get_alma_user(args.dest_user)
-        source_roles: list = source_user["user_role"]
-        continue_copy: str = input(
-            f"This will copy roles from \033[1m{source_user['primary_id']}\033[0m to "
-            f"\033[1m{dest_user['primary_id']}\033[0m. Continue and review roles? [y/n]"
-        )
-        if continue_copy.lower() == "y":
-            review_roles: str = input(
-                "would you like to review the roles that will be copied? [y/n]"
-            )
-            if review_roles.lower() == "y":
-                print_user_roles(source_roles)
-            while True:
-                do_copy: str = input(
-                    "Copy these roles? WARNING: This operation cannont be undone. "
-                    "[type 'copy-roles' to continue OR 'abort' ] "
-                )
-                if do_copy.lower() == "copy-roles":
-                    alma_client.update_alma_roles(source_roles, dest_user)
-                    print("Copy operation initiated.")  # noqa: T201
-                    exit()
-                if do_copy.lower() == "abort":
-                    print("Copy operation cancelled.")  # noqa: T201
-                    exit()
+    return tabulate(roles_tab, headers="keys")
