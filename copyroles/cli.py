@@ -44,8 +44,8 @@ def copy_roles(
             source_user = alma_client.get_alma_user(source_username)
             target_user = alma_client.get_alma_user(target_username)
         except HTTPError as e:
-            click.echo(f"Error getting users: {e.response.text}")
-            return
+            error_message = f"Could not get user - {e.response.text}"
+            raise click.ClickException(error_message) from e
         if click.confirm("review roles?"):
             click.echo(print_user_roles(source_user["user_role"]))
         do_copy = click.prompt(
@@ -60,7 +60,8 @@ def copy_roles(
                 alma_client.update_alma_roles(source_user["user_role"], target_user)
                 click.echo("Roles copied.")
             except HTTPError as e:
-                click.echo(f"Error copying roles: {e.response.text}")
+                error_message = f"Could not update roles - {e.response.text}"
+                raise click.ClickException(error_message) from e
         else:
             click.echo("Copy operation cancelled.")
 
@@ -103,17 +104,14 @@ def copy_user(username: str, source_env: str, target_env: str) -> None:
         try:
             source_user = source_alma_client.get_alma_user(username)
         except HTTPError as e:
-            click.echo(f"Error getting source user from : {e.response.text}")
-            return
+            error_message = f"Could not get user - {e.response.text}"
+            raise click.ClickException(error_message) from e
         try:
             target_alma_client.create_alma_user(source_user)
+            click.echo("User copied.")
         except HTTPError as e:
-            click.echo(
-                f"Error creating user in {target_alma_client.alma_environment.upper()}"
-                f" environment: {e.response.text}"
-            )
-            return
-        click.echo("User copied.")
+            error_message = f"Could not create user - {e.response.text}"
+            raise click.ClickException(error_message) from e
 
 
 def print_user_roles(roles: list) -> str:
@@ -127,7 +125,3 @@ def print_user_roles(roles: list) -> str:
         for role in roles
     ]
     return tabulate(roles_tab, headers="keys")
-
-
-if __name__ == "__main__":
-    cli()
