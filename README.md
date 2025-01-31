@@ -18,7 +18,7 @@ SANDBOX_ALMA_API_KEY=# an Alma API key for the Alma `sandbox` environemnt with `
         - copy alma rules from one user to another in the same alma environment
         -  the roles of the target users will be completely overwritten
 
-         `pipenv run copy_roles [primary_id_of_source_user] [primary_id_of_target_user] -e [alma environment 'prod' or 'sandbox']`
+         `pipenv run copy_roles [primary_id_of_source_user] [primary_id_of_target_user] --environment [prod|sandbox]`
     - copy_user: 
         - Copy a user from Production to Sandbox
 
